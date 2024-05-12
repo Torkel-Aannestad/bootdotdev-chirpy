@@ -18,6 +18,15 @@ func newApiConfig(db *database.DB) *handlers.ApiConfig {
 
 func main() {
 	const port = "8080"
+
+	// dev := flag.Bool("dev", false, "Enable dev mode")
+	// flag.Parse()
+
+	// if *dev {
+	// 	fmt.Printf("dev: %v", dev)
+	// 	// os.Remove("./database.json")
+	// }
+
 	mux := http.NewServeMux()
 	db, err := database.NewDb("./database.json")
 	if err != nil {
@@ -31,8 +40,11 @@ func main() {
 	mux.HandleFunc("GET /api/reset", cfg.HandlerReset)
 	mux.HandleFunc("GET /api/healthz", handlers.HandlerReadiness)
 	mux.HandleFunc("GET /api/chirps", cfg.HandlerChirpsRetrieve)
+	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.HandlerChirpsRetrieveByID)
 	mux.HandleFunc("POST /api/chirps", cfg.HandlerChirpsCreate)
 	mux.HandleFunc("GET /admin/metrics", cfg.HandlerMetrics)
+	mux.HandleFunc("POST /api/users", cfg.HandlerUsersCreate)
+	mux.HandleFunc("POST /api/login", cfg.HandlerLogin)
 
 	srv := &http.Server{
 		Addr:           ":" + port,

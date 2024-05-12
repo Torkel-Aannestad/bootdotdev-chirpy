@@ -5,6 +5,8 @@ import (
 	"errors"
 	"os"
 	"sync"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DB struct {
@@ -12,11 +14,20 @@ type DB struct {
 	Mu   *sync.RWMutex
 }
 type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
+	Chirps map[int]Chirp      `json:"chirps"`
+	Users  map[int]UserWithPW `json:"user"`
 }
 type Chirp struct {
 	Id   int    `json:"id"`
 	Body string `json:"body"`
+}
+type User struct {
+	Id    int    `json:"id"`
+	Email string `json:"email"`
+}
+type UserWithPW struct {
+	User     User
+	Password string `json:"passord"`
 }
 
 func NewDb(path string) (DB, error) {
@@ -33,6 +44,7 @@ func NewDb(path string) (DB, error) {
 func (db *DB) createDb() error {
 	dbStructure := DBStructure{
 		Chirps: map[int]Chirp{},
+		Users:  map[int]UserWithPW{},
 	}
 	return db.writeDB(dbStructure)
 }
@@ -46,6 +58,7 @@ func (db *DB) ensureDB() error {
 	return nil
 }
 
+// Chirp
 func (db *DB) CreateChirp(body string) (Chirp, error) {
 	dbData, err := db.loadDB()
 	if err != nil {
@@ -80,6 +93,71 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 	}
 	return chirps, nil
 }
+
+func (db *DB) GetChirpById(id int) (Chirp, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return Chirp{}, err
+	}
+
+	chirp, ok := dbStructure.Chirps[id]
+	if !ok {
+		return Chirp{}, errors.New("could not find chirp by the given id")
+	}
+
+	return chirp, nil
+}
+
+// Chirp END
+// Users
+func (db *DB) CreateUser(email string, passord []byte) (User, error) {
+	dbData, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	passwordHash, err := bcrypt.GenerateFromPassword(passord, 11)
+	if err != nil {
+		return User{}, err
+	}
+
+	id := len(dbData.Users) + 1
+	newUser := UserWithPW{
+		User: User{
+			Id:    id,
+			Email: email,
+		},
+		Password: string(passwordHash),
+	}
+
+	dbData.Users[id] = newUser
+
+	err = db.writeDB(dbData)
+	if err != nil {
+		return User{}, err
+	}
+
+	return newUser.User, nil
+}
+func (db *DB) GetUserByEmail(email string) (UserWithPW, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return UserWithPW{}, err
+	}
+
+	UserWithPW := UserWithPW{}
+	for k, v := range dbStructure.Users {
+		if v.User.Email == email {
+			UserWithPW = dbStructure.Users[k]
+		}
+	}
+
+	return UserWithPW, nil
+}
+
+//Users END
+
+//os.Read & os.Write
 
 func (db *DB) loadDB() (DBStructure, error) {
 	db.Mu.Lock()
