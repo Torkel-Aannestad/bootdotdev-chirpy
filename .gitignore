@@ -21,3 +21,4 @@
 go.work
 
 database.json
+.env

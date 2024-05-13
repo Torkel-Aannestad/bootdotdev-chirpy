@@ -9,5 +9,6 @@ import (
 type ApiConfig struct {
 	FileserverHits int
 	DB             *database.DB
+	JWTSecret      string
 	Mu             sync.Mutex
 }

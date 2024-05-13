@@ -3,8 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/torkelaannestad/bootdotdev-chirpy/handlers"
 	"github.com/torkelaannestad/bootdotdev-chirpy/internal/database"
 )
@@ -12,12 +14,14 @@ import (
 func newApiConfig(db *database.DB) *handlers.ApiConfig {
 	return &handlers.ApiConfig{
 		FileserverHits: 0,
+		JWTSecret:      os.Getenv("JWT_SECRET"),
 		DB:             db,
 	}
 }
 
 func main() {
 	const port = "8080"
+	godotenv.Load()
 
 	// dev := flag.Bool("dev", false, "Enable dev mode")
 	// flag.Parse()
@@ -39,11 +43,14 @@ func main() {
 
 	mux.HandleFunc("GET /api/reset", cfg.HandlerReset)
 	mux.HandleFunc("GET /api/healthz", handlers.HandlerReadiness)
+	mux.HandleFunc("GET /admin/metrics", cfg.HandlerMetrics)
+
 	mux.HandleFunc("GET /api/chirps", cfg.HandlerChirpsRetrieve)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.HandlerChirpsRetrieveByID)
 	mux.HandleFunc("POST /api/chirps", cfg.HandlerChirpsCreate)
-	mux.HandleFunc("GET /admin/metrics", cfg.HandlerMetrics)
+
 	mux.HandleFunc("POST /api/users", cfg.HandlerUsersCreate)
+	mux.HandleFunc("PUT /api/users", cfg.HandlerUsersUpdate)
 	mux.HandleFunc("POST /api/login", cfg.HandlerLogin)
 
 	srv := &http.Server{
