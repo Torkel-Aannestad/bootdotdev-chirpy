@@ -37,7 +37,7 @@ func (a *ApiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idStr, _ := strconv.Atoi(userId)
-	user, err := a.DB.GetUserById(idStr)
+	user, _ := a.DB.GetUserById(idStr)
 
 	fmt.Printf("user: %v", user)
 

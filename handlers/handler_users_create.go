@@ -11,7 +11,7 @@ import (
 type User struct {
 	Id       int    `json:"id"`
 	Email    string `json:"email"`
-	password string `json:"-"`
+	Password string `json:"-"`
 }
 
 func (a *ApiConfig) HandlerUsersCreate(w http.ResponseWriter, r *http.Request) {

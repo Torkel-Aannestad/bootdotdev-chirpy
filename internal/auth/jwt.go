@@ -45,13 +45,27 @@ func GenerateJTW(email string, id int, expiresInSeconds int, JWTSecret string) (
 
 }
 
-func VerifyTokenAndGetUser(signedToken string, JWTSecret string) (string, error) {
-	fmt.Println("")
-	fmt.Println("VerifyTokenAndGetUser")
-	fmt.Printf("signedToken: %v\n", signedToken)
-	fmt.Printf("JWTSecret: %v\n", JWTSecret)
-	fmt.Println("")
+func GenerateJWT2(id int, expiresInSeconds int, JWTSecret string) (signedToken string, err error) {
+	var jwtExpires int64 = 86400
+	if expiresInSeconds < 86400 && expiresInSeconds != 0 {
+		jwtExpires = int64(expiresInSeconds)
+	}
+	claims := jwt.StandardClaims{
+		Issuer:    "chirpy",
+		IssuedAt:  time.Now().UTC().Unix(),
+		ExpiresAt: jwtExpires,
+		Subject:   fmt.Sprint(id),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	signedToken, err = token.SignedString([]byte(JWTSecret))
+	if err != nil {
+		return "", err
+	}
 
+	return signedToken, nil
+}
+
+func VerifyTokenAndGetUser(signedToken string, JWTSecret string) (string, error) {
 	claims := &jwt.StandardClaims{}
 	token, err := jwt.ParseWithClaims(signedToken, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(JWTSecret), nil
