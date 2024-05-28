@@ -1,22 +1,27 @@
 package database
 
-import "errors"
+import (
+	"errors"
+	"strconv"
+)
 
 type Chirp struct {
-	Id   int    `json:"id"`
-	Body string `json:"body"`
+	Id       int    `json:"id"`
+	AuthorId int    `json:"author_id"`
+	Body     string `json:"body"`
 }
 
-func (db *DB) CreateChirp(body string) (Chirp, error) {
+func (db *DB) CreateChirp(body string, userId string) (Chirp, error) {
 	dbData, err := db.loadDB()
 	if err != nil {
 		return Chirp{}, err
 	}
-
+	userIdStr, _ := strconv.Atoi(userId)
 	id := len(dbData.Chirps) + 1
 	newChirp := Chirp{
-		Id:   id,
-		Body: body,
+		Id:       id,
+		Body:     body,
+		AuthorId: userIdStr,
 	}
 
 	dbData.Chirps[id] = newChirp
@@ -41,6 +46,21 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 	}
 	return chirps, nil
 }
+func (db *DB) GetChirpsByAuthor(authorId int) ([]Chirp, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return []Chirp{}, err
+	}
+
+	chirps := []Chirp{}
+	for _, val := range dbStructure.Chirps {
+		if val.AuthorId == authorId {
+			chirps = append(chirps, val)
+		}
+		continue
+	}
+	return chirps, nil
+}
 
 func (db *DB) GetChirpById(id int) (Chirp, error) {
 	dbStructure, err := db.loadDB()
@@ -54,4 +74,20 @@ func (db *DB) GetChirpById(id int) (Chirp, error) {
 	}
 
 	return chirp, nil
+}
+
+func (db *DB) DeleteChirp(id int) error {
+	dbData, err := db.loadDB()
+	if err != nil {
+		return err
+	}
+
+	delete(dbData.Chirps, id)
+
+	err = db.writeDB(dbData)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

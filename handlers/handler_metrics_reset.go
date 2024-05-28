@@ -2,10 +2,10 @@ package handlers
 
 import "net/http"
 
-func (a *ApiConfig) HandlerReset(w http.ResponseWriter, _ *http.Request) {
-	a.Mu.Lock()
-	defer a.Mu.Unlock()
+func (cfg *ApiConfig) HandlerReset(w http.ResponseWriter, _ *http.Request) {
+	cfg.Mu.Lock()
+	defer cfg.Mu.Unlock()
 
-	a.FileserverHits = 0
+	cfg.FileserverHits = 0
 
 }

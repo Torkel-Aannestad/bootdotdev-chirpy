@@ -2,12 +2,12 @@ package handlers
 
 import "net/http"
 
-func (a *ApiConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
+func (cfg *ApiConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		a.Mu.Lock()
-		defer a.Mu.Unlock()
+		cfg.Mu.Lock()
+		defer cfg.Mu.Unlock()
 
-		a.FileserverHits++
+		cfg.FileserverHits++
 		w.Header().Set("Cache-Control", "no-cache")
 		next.ServeHTTP(w, r)
 	})

@@ -11,10 +11,8 @@ import (
 	"github.com/torkelaannestad/bootdotdev-chirpy/internal/auth"
 )
 
-func (a *ApiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
-	fmt.Printf("a.JWTSecret: %v", a.JWTSecret)
 
 	type parameters struct {
 		Email    string `json:"email"`
@@ -31,13 +29,13 @@ func (a *ApiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	jwtToken := strings.Split(bearerToken[0], " ")[1]
 
-	userId, err := auth.VerifyTokenAndGetUser(jwtToken, a.JWTSecret)
+	userId, err := auth.VerifyTokenAndGetUser(jwtToken, cfg.JWTSecret)
 	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, "Not authorized")
 		return
 	}
 	idStr, _ := strconv.Atoi(userId)
-	user, _ := a.DB.GetUserById(idStr)
+	user, _ := cfg.DB.GetUserById(idStr)
 
 	fmt.Printf("user: %v", user)
 
@@ -53,7 +51,7 @@ func (a *ApiConfig) HandlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
 		log.Print("could not encrypt password")
 	}
 
-	updatedUser, err := a.DB.UpdateUser(user.Id, params.Email, passwordHash)
+	updatedUser, err := cfg.DB.UpdateUser(user.Id, params.Email, passwordHash)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Could not update user")
 	}

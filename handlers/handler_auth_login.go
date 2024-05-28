@@ -8,17 +8,18 @@ import (
 )
 
 type Session struct {
-	Id    int    `json:"id"`
-	Email string `json:"email"`
-	Token string `json:"token"`
+	Id           int    `json:"id"`
+	Email        string `json:"email"`
+	IsChirpyRed  bool   `json:"is_chirpy_red"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
-func (a *ApiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) HandlerAuthLogin(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	type parameters struct {
-		Password           string `json:"password"`
-		Email              string `json:"email"`
-		Expires_in_seconds int    `json:"expires_in_seconds,omitempty"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 	type response struct {
 		Session
@@ -31,7 +32,7 @@ func (a *ApiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 		RespondWithError(w, http.StatusBadRequest, "could not read request body")
 	}
 
-	user, err := a.DB.GetUserByEmail(params.Email)
+	user, err := cfg.DB.GetUserByEmail(params.Email)
 	if err != nil {
 		RespondWithError(w, http.StatusBadRequest, "something went wrong")
 	}
@@ -41,16 +42,25 @@ func (a *ApiConfig) HandlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	signedToken, err := auth.GenerateJTW(user.Email, user.Id, params.Expires_in_seconds, a.JWTSecret)
+	signedToken, err := auth.GenerateJTW(user.Email, user.Id, cfg.JWTSecret)
 	if err != nil {
 		RespondWithError(w, http.StatusUnauthorized, err.Error())
 		return
 	}
+
+	refreshToken := auth.GenerateRefreshToken()
+	err = cfg.DB.SaveRefreshToken(user.Id, refreshToken)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, err.Error())
+	}
+
 	resp := response{
 		Session: Session{
-			Id:    user.Id,
-			Email: user.Email,
-			Token: signedToken,
+			Id:           user.Id,
+			Email:        user.Email,
+			IsChirpyRed:  user.IsChirpyRed,
+			Token:        signedToken,
+			RefreshToken: refreshToken,
 		},
 	}
 

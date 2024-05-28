@@ -6,6 +6,7 @@ type User struct {
 	Id           int    `json:"id"`
 	Email        string `json:"email"`
 	PasswordHash string `json:"passordhash"`
+	IsChirpyRed  bool   `json:"is_chirpy_red"`
 }
 
 func (db *DB) CreateUser(email string, hashedPassord string) (User, error) {
@@ -19,6 +20,7 @@ func (db *DB) CreateUser(email string, hashedPassord string) (User, error) {
 		Id:           id,
 		Email:        email,
 		PasswordHash: hashedPassord,
+		IsChirpyRed:  false,
 	}
 
 	dbData.Users[id] = newUser
@@ -51,6 +53,27 @@ func (db *DB) UpdateUser(id int, email string, hashedPassord string) (User, erro
 	}
 
 	return updatedUser, nil
+}
+func (db *DB) UpdateUserChirpyRed(id int, IsChirpyRed bool) error {
+	dbData, err := db.loadDB()
+	if err != nil {
+		return err
+	}
+
+	user, ok := dbData.Users[id]
+	if !ok {
+
+		return errors.New("user not found")
+	}
+	user.IsChirpyRed = IsChirpyRed
+	dbData.Users[id] = user
+
+	err = db.writeDB(dbData)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (db *DB) GetUserById(id int) (User, error) {

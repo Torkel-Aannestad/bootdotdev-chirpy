@@ -5,18 +5,31 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/torkelaannestad/bootdotdev-chirpy/internal/auth"
 )
 
-func (a *ApiConfig) HandlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) HandlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	type parameters struct {
 		Body string `json:"body"`
 	}
 
+	bearer, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "please include the http header")
+		return
+	}
+	userId, err := auth.VerifyTokenAndGetUser(bearer, cfg.JWTSecret)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "not a valid token")
+		return
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Something went wrong")
 		return
@@ -28,7 +41,7 @@ func (a *ApiConfig) HandlerChirpsCreate(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	createdChirp, err := a.DB.CreateChirp(cleanedChirp)
+	createdChirp, err := cfg.DB.CreateChirp(cleanedChirp, userId)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "could not write to db")
 		return

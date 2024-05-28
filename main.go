@@ -15,6 +15,7 @@ func newApiConfig(db *database.DB) *handlers.ApiConfig {
 	return &handlers.ApiConfig{
 		FileserverHits: 0,
 		JWTSecret:      os.Getenv("JWT_SECRET"),
+		PolkaKey:       os.Getenv("POLKA_KEY"),
 		DB:             db,
 	}
 }
@@ -48,10 +49,16 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", cfg.HandlerChirpsRetrieve)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", cfg.HandlerChirpsRetrieveByID)
 	mux.HandleFunc("POST /api/chirps", cfg.HandlerChirpsCreate)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.HandlerChirpsDelete)
 
 	mux.HandleFunc("POST /api/users", cfg.HandlerUsersCreate)
 	mux.HandleFunc("PUT /api/users", cfg.HandlerUsersUpdate)
-	mux.HandleFunc("POST /api/login", cfg.HandlerLogin)
+
+	mux.HandleFunc("POST /api/login", cfg.HandlerAuthLogin)
+	mux.HandleFunc("POST /api/refresh", cfg.HandlerAuthRefresh)
+	mux.HandleFunc("POST /api/revoke", cfg.HandlerAuthRevoke)
+
+	mux.HandleFunc("POST /api/polka/webhooks", cfg.HandlerPolkaWebhooks)
 
 	srv := &http.Server{
 		Addr:           ":" + port,

@@ -9,12 +9,13 @@ import (
 )
 
 type User struct {
-	Id       int    `json:"id"`
-	Email    string `json:"email"`
-	Password string `json:"-"`
+	Id          int    `json:"id"`
+	Email       string `json:"email"`
+	Password    string `json:"-"`
+	IsChirpyRed bool   `json:"is_chirpy_red"`
 }
 
-func (a *ApiConfig) HandlerUsersCreate(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) HandlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	type parameters struct {
@@ -37,15 +38,16 @@ func (a *ApiConfig) HandlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 		log.Print("could not encrypt password")
 	}
 
-	user, err := a.DB.CreateUser(params.Email, passwordHash)
+	user, err := cfg.DB.CreateUser(params.Email, passwordHash)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Could not create user")
 	}
 
 	resp := response{
 		User: User{
-			Id:    user.Id,
-			Email: user.Email,
+			Id:          user.Id,
+			Email:       user.Email,
+			IsChirpyRed: user.IsChirpyRed,
 		},
 	}
 
