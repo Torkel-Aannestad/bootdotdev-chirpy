@@ -13,7 +13,7 @@ func (cfg *ApiConfig) HandlerAuthRefresh(w http.ResponseWriter, r *http.Request)
 		Token string `json:"token"`
 	}
 
-	refreshToken, err := auth.GetBearerToken(r.Header)
+	refreshToken, _ := auth.GetBearerToken(r.Header)
 
 	if r.Body != http.NoBody {
 		fmt.Println("Refresh token req includes body")
