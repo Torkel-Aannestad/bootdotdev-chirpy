@@ -59,8 +59,8 @@ func (db *DB) loadDB() (DBStructure, error) {
 	err = json.Unmarshal(data, &dbStructure)
 	if err != nil {
 		return DBStructure{}, err
-	}
 
+	}
 	return dbStructure, nil
 }
 
